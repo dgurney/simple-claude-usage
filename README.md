@@ -23,9 +23,9 @@ There's also a [GNOME version](https://github.com/dgurney/gnome-claude-usage).
 make install
 ```
 
-Then open Claude Usage from Applications. To start it when you log in, turn
-on Open at Login in its menu. To update, quit the app and run
-`make install` again.
+Then open Claude Usage from Applications. To start it when you log in,
+choose Settings… in its menu and turn on Open at login. To update, quit the
+app and run `make install` again.
 
 ## Sign-in
 

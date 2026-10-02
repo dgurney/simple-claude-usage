@@ -1,11 +1,8 @@
 import AppKit
-import ServiceManagement
 import SwiftUI
 
 /// The width the menu's own rows are laid out at. They stretch with the menu.
 private let rowWidth: CGFloat = 300
-/// How much menus indent their items' titles while one of them has a checkmark.
-private let checkmarkIndent: CGFloat = 14
 
 @MainActor
 final class StatusItemController: NSObject, NSMenuDelegate {
@@ -15,7 +12,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 	/// The rows for the usage limits and the line below them.
 	private var usageItems: [NSMenuItem] = []
 	private let serviceItem = NSMenuItem()
-	private let openAtLoginItem = NSMenuItem()
+	private lazy var settingsWindow = makeSettingsWindow()
 
 	override init() {
 		super.init()
@@ -23,9 +20,6 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 		serviceItem.action = #selector(openStatusPage)
 		serviceItem.target = self
 		serviceItem.toolTip = "Open \(statusPageURL.host()!)"
-		openAtLoginItem.title = "Open at Login"
-		openAtLoginItem.action = #selector(toggleOpenAtLogin)
-		openAtLoginItem.target = self
 		// The dot's color is the status, so it has to show even where menus
 		// otherwise leave out item images.
 		if #available(macOS 27, *) {
@@ -37,7 +31,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 		menu.addItem(.sectionHeader(title: "Claude Status"))
 		menu.addItem(serviceItem)
 		menu.addItem(.separator())
-		menu.addItem(openAtLoginItem)
+		let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+		settingsItem.target = self
+		menu.addItem(settingsItem)
 		menu.addItem(NSMenuItem(
 			title: "Quit Claude Usage",
 			action: #selector(NSApplication.terminate(_:)),
@@ -50,8 +46,6 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 	}
 
 	func menuWillOpen(_ menu: NSMenu) {
-		// The login item can also be changed in System Settings.
-		openAtLoginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
 		render()
 		monitor.refreshIfStale()
 	}
@@ -170,11 +164,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 	}
 
 	private func hostingItem(_ view: some View) -> NSMenuItem {
-		let row = view.padding(.leading, openAtLoginItem.state == .on ? checkmarkIndent : 0)
-		let height = NSHostingController(rootView: row)
+		let height = NSHostingController(rootView: view)
 			.sizeThatFits(in: CGSize(width: rowWidth, height: .greatestFiniteMagnitude))
 			.height
-		let hostingView = NSHostingView(rootView: row)
+		let hostingView = NSHostingView(rootView: view)
 		hostingView.frame.size = CGSize(width: rowWidth, height: height)
 		hostingView.autoresizingMask = .width
 		let item = NSMenuItem()
@@ -186,17 +179,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 		NSWorkspace.shared.open(statusPageURL)
 	}
 
-	@objc private func toggleOpenAtLogin() {
-		do {
-			if SMAppService.mainApp.status == .enabled {
-				try SMAppService.mainApp.unregister()
-			} else {
-				try SMAppService.mainApp.register()
-			}
-		} catch {
-			NSApp.activate()
-			NSApp.presentError(error)
-		}
+	@objc private func openSettings() {
+		// The app has no Dock icon, so the window would otherwise open behind other apps.
+		NSApp.activate()
+		settingsWindow.makeKeyAndOrderFront(nil)
 	}
 }
 
