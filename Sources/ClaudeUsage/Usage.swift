@@ -18,6 +18,29 @@ struct SignIn: Equatable {
 	let accessToken: String
 	/// nil when the plan is unknown
 	let subscriptionType: String?
+	/// The plan's usage tier, e.g. "default_claude_max_5x", or nil when unknown.
+	let rateLimitTier: String?
+
+	/// The plan's name, as Claude Code shows it plus the Max tier or Team
+	/// premium seat, or nil when the plan is unknown.
+	var planName: String? {
+		switch (subscriptionType, rateLimitTier) {
+		case ("max", "default_claude_max_5x"): "Claude Max 5x"
+		case ("max", "default_claude_max_20x"): "Claude Max 20x"
+		case ("max", _): "Claude Max"
+		case ("pro", _): "Claude Pro"
+		case ("team", "default_claude_max_5x"): "Claude Team (Premium seat)"
+		case ("team", _): "Claude Team"
+		case ("enterprise", _): "Claude Enterprise"
+		default: nil
+		}
+	}
+}
+
+struct Usage: Equatable {
+	/// nil when the plan is unknown
+	let planName: String?
+	let limits: [UsageLimit]
 }
 
 struct UsageLimit: Equatable {
@@ -112,6 +135,7 @@ func parseSignIn(_ data: Data) throws -> SignIn {
 			let accessToken: String
 			let refreshToken: String
 			let subscriptionType: String?
+			let rateLimitTier: String?
 		}
 
 		let claudeAiOauth: OAuth?
@@ -124,7 +148,10 @@ func parseSignIn(_ data: Data) throws -> SignIn {
 	else {
 		throw UsageError.notSignedIn
 	}
-	return SignIn(accessToken: oauth.accessToken, subscriptionType: oauth.subscriptionType)
+	return SignIn(
+		accessToken: oauth.accessToken,
+		subscriptionType: oauth.subscriptionType,
+		rateLimitTier: oauth.rateLimitTier)
 }
 
 /// Returns the error for an unsuccessful response, or nil for a successful one.
@@ -138,7 +165,7 @@ func responseError(status: Int, retryAfter: String?) -> UsageError? {
 	}
 }
 
-func fetchUsage(for signIn: SignIn, session: URLSession) async throws -> [UsageLimit] {
+func fetchUsage(for signIn: SignIn, session: URLSession) async throws -> Usage {
 	var request = URLRequest(url: usageURL)
 	request.setValue("Bearer \(signIn.accessToken)", forHTTPHeaderField: "Authorization")
 	request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
@@ -148,7 +175,7 @@ func fetchUsage(for signIn: SignIn, session: URLSession) async throws -> [UsageL
 	if let error = responseError(status: http.statusCode, retryAfter: http.value(forHTTPHeaderField: "Retry-After")) {
 		throw error
 	}
-	return try parseUsage(data, subscriptionType: signIn.subscriptionType)
+	return Usage(planName: signIn.planName, limits: try parseUsage(data, subscriptionType: signIn.subscriptionType))
 }
 
 /// Has Claude Code renew its sign-in. `claude doctor` renews an expired sign-in

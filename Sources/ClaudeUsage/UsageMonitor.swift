@@ -18,7 +18,7 @@ struct Fetched<Value> {
 /// Keeps the usage limits and the Claude status up to date.
 @MainActor
 final class UsageMonitor {
-	private(set) var usage: Fetched<[UsageLimit]>?
+	private(set) var usage: Fetched<Usage>?
 	/// Why the latest usage refresh failed.
 	private(set) var error: (any Error)?
 	private(set) var isRenewing = false
@@ -102,7 +102,7 @@ final class UsageMonitor {
 		}
 	}
 
-	private func fetch() async throws -> [UsageLimit] {
+	private func fetch() async throws -> Usage {
 		let signIn = try await readSignIn()
 		if let blocked, signIn.accessToken == blocked.token, Date.now < blocked.until {
 			if blocked.error == .signInExpired {

@@ -153,12 +153,17 @@ private let fable = UsageLimit(
 @Test func signIn() throws {
 	#expect(
 		try parseSignIn(Data("""
-			{"claudeAiOauth": {"accessToken": "access", "refreshToken": "refresh", "expiresAt": 1, "subscriptionType": "pro"}}
-			""".utf8)) == SignIn(accessToken: "access", subscriptionType: "pro"))
+			{
+				"claudeAiOauth": {
+					"accessToken": "access", "refreshToken": "refresh", "expiresAt": 1,
+					"subscriptionType": "max", "rateLimitTier": "default_claude_max_5x"
+				}
+			}
+			""".utf8)) == SignIn(accessToken: "access", subscriptionType: "max", rateLimitTier: "default_claude_max_5x"))
 	#expect(
 		try parseSignIn(Data("""
 			{"claudeAiOauth": {"accessToken": "access", "refreshToken": "refresh", "expiresAt": 1}}
-			""".utf8)).subscriptionType == nil,
+			""".utf8)) == SignIn(accessToken: "access", subscriptionType: nil, rateLimitTier: nil),
 		"unknown plan")
 	#expect(throws: UsageError.notSignedIn, "only other sign-ins") {
 		try parseSignIn(Data(#"{"mcpOAuth": {}}"#.utf8))
@@ -168,6 +173,21 @@ private let fable = UsageLimit(
 			{"claudeAiOauth": {"accessToken": "", "refreshToken": "", "expiresAt": 0, "subscriptionType": "max"}}
 			""".utf8))
 	}
+}
+
+@Test func planNames() {
+	func planName(_ subscriptionType: String?, _ rateLimitTier: String?) -> String? {
+		SignIn(accessToken: "", subscriptionType: subscriptionType, rateLimitTier: rateLimitTier).planName
+	}
+	#expect(planName("max", "default_claude_max_5x") == "Claude Max 5x")
+	#expect(planName("max", "default_claude_max_20x") == "Claude Max 20x")
+	#expect(planName("max", nil) == "Claude Max", "unknown tier")
+	#expect(planName("pro", "default_claude_ai") == "Claude Pro")
+	#expect(planName("team", "default_claude_max_5x") == "Claude Team (Premium seat)")
+	#expect(planName("team", nil) == "Claude Team", "unknown seat")
+	#expect(planName("enterprise", nil) == "Claude Enterprise")
+	#expect(planName(nil, nil) == nil, "unknown plan")
+	#expect(planName("free", nil) == nil, "unrecognized plan")
 }
 
 @Test func serviceStatus() throws {

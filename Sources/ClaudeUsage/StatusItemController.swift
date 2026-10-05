@@ -9,7 +9,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 	private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 	private let monitor = UsageMonitor()
 	private let menu = NSMenu()
-	/// The rows for the usage limits and the line below them.
+	/// The plan's name, the rows for the usage limits and the line below them.
 	private var usageItems: [NSMenuItem] = []
 	private let serviceItem = NSMenuItem()
 	private lazy var settingsWindow = makeSettingsWindow()
@@ -60,8 +60,11 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 		for item in usageItems {
 			menu.removeItem(item)
 		}
-		usageItems = (monitor.usage?.value ?? []).map { hostingItem(LimitRow(limit: $0, now: now)) }
+		usageItems = (monitor.usage?.value.limits ?? []).map { hostingItem(LimitRow(limit: $0, now: now)) }
 		usageItems.append(hostingItem(footer(now: now)))
+		if let planName = monitor.usage?.value.planName {
+			usageItems.insert(.sectionHeader(title: planName), at: 0)
+		}
 		for (index, item) in usageItems.enumerated() {
 			menu.insertItem(item, at: index)
 		}
@@ -69,7 +72,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
 	private func renderButton() {
 		let button = statusItem.button!
-		let shown = (monitor.usage?.value ?? []).compactMap { limit in
+		let shown = (monitor.usage?.value.limits ?? []).compactMap { limit in
 			limit.menuBarLabel.map { (label: $0, percentLeft: percentLeft(limit.utilization), title: limit.title) }
 		}
 
@@ -123,7 +126,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 		guard let usage = monitor.usage else {
 			return UsageFooter(kind: .progress, text: "Loading…")
 		}
-		if usage.value.isEmpty {
+		if usage.value.limits.isEmpty {
 			return UsageFooter(kind: .info, text: "No usage limits reported")
 		}
 		return UsageFooter(kind: .info, text: "Updated \(formatClockTime(usage.date, now: now))")

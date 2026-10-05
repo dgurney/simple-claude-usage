@@ -4,7 +4,7 @@ A macOS menu bar app that shows how much of your Claude plan's usage limits
 is left.
 
 The menu bar shows what's left of your 5-hour session and weekly limits.
-Click it to see every limit, when each one resets, and the current
+Click it to see your plan, every limit, when each one resets, and the current
 [Claude status](https://status.claude.com). Usage refreshes every 5 minutes,
 and when you open the menu if it's more than a minute old.
 
