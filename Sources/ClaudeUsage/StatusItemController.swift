@@ -87,7 +87,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 		let fontSize = NSFont.menuBarFont(ofSize: 0).pointSize
 		let labelAttributes: [NSAttributedString.Key: Any] = [
 			.font: NSFont.systemFont(ofSize: fontSize - 2, weight: .medium),
-			.foregroundColor: NSColor.secondaryLabelColor,
+			// The menu bar draws secondaryLabelColor as an opaque gray that can
+			// vanish into the wallpaper, so dim the label color instead. The color
+			// is resolved when drawn so it follows the menu bar's light or dark text.
+			.foregroundColor: NSColor(name: nil) { _ in NSColor.labelColor.withAlphaComponent(0.6) },
 		]
 		let title = NSMutableAttributedString()
 		for (index, limit) in shown.enumerated() {
