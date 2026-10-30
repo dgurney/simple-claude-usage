@@ -179,8 +179,8 @@ private let fable = UsageLimit(
 	func planName(_ subscriptionType: String?, _ rateLimitTier: String?) -> String? {
 		SignIn(accessToken: "", subscriptionType: subscriptionType, rateLimitTier: rateLimitTier).planName
 	}
-	#expect(planName("max", "default_claude_max_5x") == "Claude Max 5x")
-	#expect(planName("max", "default_claude_max_20x") == "Claude Max 20x")
+	#expect(planName("max", "default_claude_max_5x") == "Claude Max")
+	#expect(planName("max", "default_claude_max_20x") == "Claude Ultra")
 	#expect(planName("max", nil) == "Claude Max", "unknown tier")
 	#expect(planName("pro", "default_claude_ai") == "Claude Pro")
 	#expect(planName("team", "default_claude_max_5x") == "Claude Team (Premium seat)")

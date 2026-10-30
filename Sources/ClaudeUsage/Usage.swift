@@ -18,15 +18,15 @@ struct SignIn: Equatable {
 	let accessToken: String
 	/// nil when the plan is unknown
 	let subscriptionType: String?
-	/// The plan's usage tier, e.g. "default_claude_max_5x", or nil when unknown.
+	/// The plan's usage tier, e.g. "default_claude_max_5x" for Max or
+	/// "default_claude_max_20x" for Ultra, or nil when unknown.
 	let rateLimitTier: String?
 
-	/// The plan's name, as Claude Code shows it plus the Max tier or Team
-	/// premium seat, or nil when the plan is unknown.
+	/// The plan's name, as the Claude app shows it plus the Team premium seat,
+	/// or nil when the plan is unknown. Both Max and Ultra are "max" plans.
 	var planName: String? {
 		switch (subscriptionType, rateLimitTier) {
-		case ("max", "default_claude_max_5x"): "Claude Max 5x"
-		case ("max", "default_claude_max_20x"): "Claude Max 20x"
+		case ("max", "default_claude_max_20x"): "Claude Ultra"
 		case ("max", _): "Claude Max"
 		case ("pro", _): "Claude Pro"
 		case ("team", "default_claude_max_5x"): "Claude Team (Premium seat)"
