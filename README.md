@@ -5,8 +5,9 @@ is left.
 
 The menu bar shows what's left of your 5-hour session and weekly limits.
 Click it to see your plan, every limit, when each one resets, and the current
-[Claude status](https://status.claude.com). Usage refreshes every 5 minutes,
-and when you open the menu if it's more than a minute old.
+[Claude status](https://status.claude.com), which you can turn off in
+settings. Usage refreshes every 5 minutes, and when you open the menu if
+it's more than a minute old.
 
 There's also a [GNOME version](https://github.com/dgurney/gnome-claude-usage).
 

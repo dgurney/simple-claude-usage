@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	}
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
+		UserDefaults.standard.register(defaults: [showsClaudeStatusKey: true])
 		// Never shown, as the app has no menu bar, but lets ⌘W close the settings window.
 		let windowMenu = NSMenu()
 		windowMenu.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")

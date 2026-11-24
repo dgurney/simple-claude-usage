@@ -12,6 +12,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 	/// The plan's name, the rows for the usage limits and the line below them.
 	private var usageItems: [NSMenuItem] = []
 	private let serviceItem = NSMenuItem()
+	/// The service item with its header and the separator above them.
+	private lazy var serviceItems = [NSMenuItem.separator(), .sectionHeader(title: "Claude Status"), serviceItem]
 	private lazy var settingsWindow = makeSettingsWindow()
 
 	override init() {
@@ -27,9 +29,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 		}
 
 		menu.delegate = self
-		menu.addItem(.separator())
-		menu.addItem(.sectionHeader(title: "Claude Status"))
-		menu.addItem(serviceItem)
+		for item in serviceItems {
+			menu.addItem(item)
+		}
 		menu.addItem(.separator())
 		let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
 		settingsItem.target = self
@@ -41,8 +43,16 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 		statusItem.menu = menu
 
 		monitor.onChange = { [unowned self] in render() }
+		// Settings are only changed in this process, on the main thread.
+		NotificationCenter.default.addObserver(
+			self, selector: #selector(settingsChanged), name: UserDefaults.didChangeNotification, object: nil)
 		render()
 		monitor.start()
+	}
+
+	@objc private func settingsChanged() {
+		render()
+		monitor.refreshIfStale()
 	}
 
 	func menuWillOpen(_ menu: NSMenu) {
@@ -146,6 +156,14 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 	}
 
 	private func renderServiceItem(now: Date) {
+		let shown = UserDefaults.standard.showsClaudeStatus
+		for item in serviceItems {
+			item.isHidden = !shown
+		}
+		guard shown else {
+			return
+		}
+
 		let status = monitor.serviceStatus
 		var details = status?.value.incidents ?? []
 		if let error = monitor.serviceError {

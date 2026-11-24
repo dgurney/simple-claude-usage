@@ -145,7 +145,7 @@ final class UsageMonitor {
 	}
 
 	private func refreshServiceStatus() {
-		guard !isCheckingService else {
+		guard UserDefaults.standard.showsClaudeStatus, !isCheckingService else {
 			return
 		}
 		isCheckingService = true

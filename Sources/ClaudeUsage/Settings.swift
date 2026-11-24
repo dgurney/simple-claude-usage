@@ -2,6 +2,13 @@ import AppKit
 import ServiceManagement
 import SwiftUI
 
+/// Registered as on when the app launches.
+let showsClaudeStatusKey = "showsClaudeStatus"
+
+extension UserDefaults {
+	var showsClaudeStatus: Bool { bool(forKey: showsClaudeStatusKey) }
+}
+
 @MainActor
 func makeSettingsWindow() -> NSWindow {
 	let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
@@ -15,11 +22,13 @@ func makeSettingsWindow() -> NSWindow {
 
 private struct SettingsView: View {
 	@State private var openAtLogin = false
+	@AppStorage(showsClaudeStatusKey) private var showsClaudeStatus = true
 	@Environment(\.appearsActive) private var appearsActive
 
 	var body: some View {
 		Form {
 			Toggle("Open at login", isOn: Binding(get: { openAtLogin }, set: setOpenAtLogin))
+			Toggle("Show the Claude system status", isOn: $showsClaudeStatus)
 		}
 		.formStyle(.grouped)
 		.scrollDisabled(true)
